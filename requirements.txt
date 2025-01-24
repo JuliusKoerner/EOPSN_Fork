@@ -8,7 +8,7 @@ shapely
 pandas
 wandb
 seaborn
-sklearn
+scikit-learn
 Embeddings2Image
-git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI&egg=pycocotools
+pycocotools
 git+https://github.com/cocodataset/panopticapi.git#egg=panopticapi
