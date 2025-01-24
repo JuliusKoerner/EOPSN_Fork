@@ -13,7 +13,10 @@ from detectron2.data.datasets.builtin_meta import COCO_CATEGORIES
 
 from panopticapi.utils import rgb2id
 
-def _process_panoptic_to_semantic(input_panoptic, output_semantic, segments, id_map, unknown_categories=None):
+
+def _process_panoptic_to_semantic(
+    input_panoptic, output_semantic, segments, id_map, unknown_categories=None
+):
     panoptic = np.asarray(Image.open(input_panoptic), dtype=np.uint32)
     panoptic = rgb2id(panoptic)
     output = np.zeros_like(panoptic, dtype=np.uint8) + 255
@@ -27,7 +30,9 @@ def _process_panoptic_to_semantic(input_panoptic, output_semantic, segments, id_
     Image.fromarray(output).save(output_semantic)
 
 
-def separate_coco_semantic_from_panoptic(panoptic_json, panoptic_root, sem_seg_root, categories, unknown_categories=None):
+def separate_coco_semantic_from_panoptic(
+    panoptic_json, panoptic_root, sem_seg_root, categories, unknown_categories=None
+):
     """
     Create semantic segmentation annotations from panoptic segmentation
     annotations, to be used by PanopticFPN.
@@ -54,9 +59,9 @@ def separate_coco_semantic_from_panoptic(panoptic_json, panoptic_root, sem_seg_r
         print("UNKNOWN")
         for c in categories:
             if unknown_categories is not None:
-                if c['name'] in unknown_categories:
-                    unknown_set.append(c['id'])
-                    print(c['id'], c['name'])
+                if c["name"] in unknown_categories:
+                    unknown_set.append(c["id"])
+                    print(c["id"], c["name"])
     assert len(stuff_ids) <= 254
     for i, stuff_id in enumerate(stuff_ids):
         id_map[stuff_id] = i + 1
@@ -68,6 +73,7 @@ def separate_coco_semantic_from_panoptic(panoptic_json, panoptic_root, sem_seg_r
         obj = json.load(f)
 
     pool = mp.Pool(processes=max(mp.cpu_count() // 2, 4))
+
     def iter_annotations():
         for anno in obj["annotations"]:
             file_name = anno["file_name"]
@@ -79,8 +85,9 @@ def separate_coco_semantic_from_panoptic(panoptic_json, panoptic_root, sem_seg_r
     print("Start writing to {} ...".format(sem_seg_root))
     start = time.time()
     pool.starmap(
-        functools.partial(_process_panoptic_to_semantic, id_map=id_map,
-                          unknown_categories=unknown_set),
+        functools.partial(
+            _process_panoptic_to_semantic, id_map=id_map, unknown_categories=unknown_set
+        ),
         iter_annotations(),
         chunksize=100,
     )
@@ -89,16 +96,19 @@ def separate_coco_semantic_from_panoptic(panoptic_json, panoptic_root, sem_seg_r
 
 if __name__ == "__main__":
     dataset_dir = os.path.join(os.getenv("DETECTRON2_DATASETS", "datasets"), "coco")
-    unknown_label_set = [e.replace('\n', '') for e in open('datasets/unknown/unknown_K20.txt', 'r').readlines()]
+    unknown_label_set = [
+        e.replace("\n", "")
+        for e in open("datasets/unknown/unknown_K20_like_U3HS.txt", "r").readlines()
+    ]
 
-#    for s in ["val2017", "train2017"]:
+    #    for s in ["val2017", "train2017"]:
     for s in ["train2017"]:
         separate_coco_semantic_from_panoptic(
             os.path.join(dataset_dir, "annotations/panoptic_{}.json".format(s)),
             os.path.join(dataset_dir, "panoptic_{}".format(s)),
             os.path.join(dataset_dir, "panoptic_stuff_{}".format(s)),
             COCO_CATEGORIES,
-            unknown_label_set
+            unknown_label_set,
         )
     for s in ["val2017"]:
         separate_coco_semantic_from_panoptic(
@@ -107,7 +117,6 @@ if __name__ == "__main__":
             os.path.join(dataset_dir, "panoptic_stuff_{}".format(s)),
             COCO_CATEGORIES,
         )
-
 
     # Prepare val2017_100 for quick testing:
 
